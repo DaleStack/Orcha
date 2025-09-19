@@ -1,0 +1,13 @@
+# Example chain configuration for Orcha
+initial_input: "Hello, world!"
+
+steps:
+  - name: "greeting_step"
+    params:
+      greeting: "Welcome"
+      language: "English"
+  
+  - name: "processing_step" 
+    params:
+      operation: "transform"
+      target: "uppercase"
