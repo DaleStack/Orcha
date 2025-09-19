@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, List, Union, Callable, Optional
+import requests
+import json
 
 
 class BaseModel(ABC):
@@ -32,31 +34,66 @@ class BaseModel(ABC):
 
 
 class PerplexityModel(BaseModel):
-    def __init__(self, api_key: str, model: str):
+    def __init__(self, api_key: str, model: str = "sonar-pro"):
         super().__init__()
         self.api_key = api_key
         self.model = model
+        self.base_url = "https://api.perplexity.ai"
+        self.endpoint = f"{self.base_url}/chat/completions"
 
-    def ask(self, prompt: str, use_tools: bool = True) -> str:
+    def ask(self, prompt: str, use_tools: bool = True, max_tokens: int = 500, temperature: float = 0.7) -> str:
         """Send a prompt to the model and return the response."""
         
+        # Prepare messages
+        messages = []
+        
         # Get system prompt from tools if available
-        system_prompt = ""
         if use_tools and self._tools and self._tools.system_prompts:
             system_prompt = self._tools.get_combined_system_prompt()
+            messages.append({"role": "system", "content": system_prompt})
         
-        # Combine system prompt with user prompt
-        if system_prompt:
-            full_prompt = f"SYSTEM: {system_prompt}\n\nUSER: {prompt}"
-        else:
-            full_prompt = prompt
+        # Add user prompt
+        messages.append({"role": "user", "content": prompt})
         
-        # Mock response that shows system prompt is working
-        if system_prompt:
-            tool_names = ", ".join(self._tools.list_active_tools()) if self._tools else "none"
-            return f"[Using tools: {tool_names}] Mock response from {self.model} for prompt: {prompt}"
-        else:
-            return f"Mock response from {self.model} for prompt: {prompt}"
+        # Prepare request payload
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature
+        }
+        
+        # Prepare headers
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        try:
+            # Make API request
+            response = requests.post(self.endpoint, headers=headers, json=payload)
+            response.raise_for_status()
+            
+            # Parse response
+            response_data = response.json()
+            
+            # Extract content from response
+            if "choices" in response_data and len(response_data["choices"]) > 0:
+                content = response_data["choices"][0]["message"]["content"]
+                
+                # Add tool info for debugging if tools are active
+                if use_tools and self._tools and self._tools.active_tools:
+                    tool_names = ", ".join(self._tools.list_active_tools())
+                    return f"[Using tools: {tool_names}] {content}"
+                else:
+                    return content
+            else:
+                return "No response content received from API"
+                
+        except requests.exceptions.RequestException as e:
+            return f"API Request Error: {str(e)}"
+        except Exception as e:
+            return f"Unexpected error: {str(e)}"
 
     def execute_chain(self, chain_steps: List[Union[dict, Callable]], initial_input: Any = None) -> Any:
         """Execute a chain of steps, returning the collective result."""
