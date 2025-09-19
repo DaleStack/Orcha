@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, List, Union, Callable, Optional
+from .chains import execute_chain
 
 class BaseModel(ABC):
     @abstractmethod
@@ -22,5 +23,5 @@ class PerplexityModel(BaseModel):
         return f"Mock response from {self.model} for prompt: {prompt}"
 
     def execute_chain(self, chain_steps: List[Union[dict, Callable]]) -> Any:
-        # Placeholder for chain execution logic
-        return "Chain executed (mock)"
+        """Execute chain of steps, returning collective result"""
+        return execute_chain(chain_steps, initial_input=self)
