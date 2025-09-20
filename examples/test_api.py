@@ -12,10 +12,7 @@ model = PerplexityModel(api_key=PERPLEXITY_API_KEY, model="sonar-pro")
 sample_text = "i love AI Engineering, programming and artificial intelligence"
 
 # USER-DEFINED FUNCTIONS (Simple & Clear)
-def make_uppercase(text):
-    """Convert text to uppercase"""
-    print(f"📝 Step 1: Converting to uppercase...")
-    return text.upper()
+
 
 def add_excitement(text):
     """Add excitement to the text"""
@@ -35,10 +32,17 @@ def ai_improve_text(text):
     improved = model(f"Make this text more professional and engaging: {text}")
     return improved
 
+def make_uppercase(text):
+    """Convert text to uppercase"""
+    print(f"📝 Final Step: Converting to uppercase...")
+    return text.upper()
+
 def add_final_touch(text):
     """Add a nice prefix"""
     print(f"✨ Step 4: Adding final touch...")
     return f"🚀 RESULT: {text}"
+
+
 
 # ==============================================================================
 # RUN THE SIMPLE CHAIN
@@ -51,10 +55,10 @@ def run_simple_chain():
     print(f"📄 Original text: '{sample_text}'\n")
     
     # Define simple processing chain
-    simple_chain = [
-        make_uppercase,    # Custom function
+    simple_chain = [        
         add_excitement,    # Custom function  
         ai_improve_text,   # AI function
+        make_uppercase, 
         add_final_touch    # Custom function
     ]
     
